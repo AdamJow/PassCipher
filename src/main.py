@@ -1,4 +1,4 @@
-from lib.SubstitutionCipher import gen_substitution_mapping
+from ciphers.substitution import gen_substitution_mapping
 
 def main():
     substitution_mapping = gen_substitution_mapping()
