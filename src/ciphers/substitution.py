@@ -1,4 +1,3 @@
-import os
 import string
 # More secure than random library
 import secrets

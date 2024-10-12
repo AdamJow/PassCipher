@@ -1,12 +1,14 @@
 from ciphers.substitution import gen_substitution_mapping
+from ciphers.file_operations import save_substitution_mapping
 
 def main():
     substitution_mapping = gen_substitution_mapping()
+    save_substitution_mapping(substitution_mapping)
 
     # Print the substitution mapping
-    print("Substitution Mapping:")
-    for original, substituted in substitution_mapping.items():
-        print(f"{original}: {substituted}")
+    # print("Substitution Mapping:")
+    # for original, substituted in substitution_mapping.items():
+    #     print(f"{original}: {substituted}")
 
 if __name__ == "__main__":
     main()
