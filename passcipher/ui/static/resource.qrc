@@ -1,0 +1,16 @@
+<RCC>
+  <qresource prefix="icon">
+    <file>icon/vault(on).png</file>
+    <file>icon/vault(off).png</file>
+    <file>icon/sidebar_list.ico</file>
+    <file>icon/sort.ico</file>
+    <file>icon/search.ico</file>
+    <file>icon/app_logo.png</file>
+    <file>icon/all_items(off).png</file>
+    <file>icon/all_items(on).png</file>
+    <file>icon/vault.ico</file>
+    <file>icon/favourites(off).png</file>
+    <file>icon/favourites(on).png</file>
+    <file>icon/web_login.ico</file>
+  </qresource>
+</RCC>

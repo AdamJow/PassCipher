@@ -1,9 +1,24 @@
+import os
 import sqlite3
 
 class Database:
     def __init__(self):
+        # Get the directory of the current file (cipher folder)
+        current_dir = os.path.dirname(__file__)
+        
+        # Navigate to the top level data folder
+        project_root = os.path.abspath(os.path.join(current_dir, '..', '..'))
+        data_dir = os.path.join(project_root, "data", "db")
+        
+        # Ensure the directory exists
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+
+        # Specify the database file path
+        db_path = os.path.join(data_dir, 'testing.db')
+        
         try:
-            self.conn = sqlite3.connect('testing.db')
+            self.conn = sqlite3.connect(db_path)
             self.cursor = self.conn.cursor()
         except sqlite3.Error as e:
             print(e)
