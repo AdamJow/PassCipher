@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icon">
+    <file>icon/add.png</file>
     <file>icon/vault(on).png</file>
     <file>icon/vault(off).png</file>
     <file>icon/sidebar_list.ico</file>

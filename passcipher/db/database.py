@@ -85,6 +85,7 @@ class Database:
             return self.cursor.lastrowid
         except sqlite3.Error as e:
             print(e)
+            self.conn.rollback()
             return None
         
     def get_data(self, table, filters=None):
@@ -127,4 +128,5 @@ class Database:
 
         except sqlite3.Error as e:
             print(e)
+            self.conn.rollback()
             return None

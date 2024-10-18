@@ -86,7 +86,7 @@
     color: #fff;
 }
 
-#sort_btn {
+#add_btn {
     border: none;
 }
 

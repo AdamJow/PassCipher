@@ -5,6 +5,7 @@ def save_substitution_mapping(substitution_mapping):
     Save the substitution mapping to a file
 
     :param substitution_mapping: The substitution cipher that will be stored
+    :return file_path: The path for the cipher mapping
     """
     # Get the directory of the current file (cipher folder)
     current_dir = os.path.dirname(__file__)
@@ -22,3 +23,5 @@ def save_substitution_mapping(substitution_mapping):
     with open(file_path, 'w') as f:
         for original, substituted in substitution_mapping.items():
             f.write(f"{original}:{substituted}\n")
+
+    return file_path

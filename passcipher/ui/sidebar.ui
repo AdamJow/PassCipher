@@ -68,7 +68,7 @@
             <string/>
            </property>
            <property name="pixmap">
-            <pixmap resource="../static/resource.qrc">:/icon/icon/app_logo.png</pixmap>
+            <pixmap resource="static/resource.qrc">:/icon/icon/app_logo.png</pixmap>
            </property>
            <property name="scaledContents">
             <bool>true</bool>
@@ -88,7 +88,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../static/resource.qrc">
+            <iconset resource="static/resource.qrc">
              <normaloff>:/icon/icon/vault(off).png</normaloff>
              <normalon>:/icon/icon/vault(on).png</normalon>:/icon/icon/vault(off).png</iconset>
            </property>
@@ -112,7 +112,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../static/resource.qrc">
+            <iconset resource="static/resource.qrc">
              <normaloff>:/icon/icon/favourites(off).png</normaloff>
              <normalon>:/icon/icon/favourites(on).png</normalon>:/icon/icon/favourites(off).png</iconset>
            </property>
@@ -136,7 +136,7 @@
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="../static/resource.qrc">
+            <iconset resource="static/resource.qrc">
              <normaloff>:/icon/icon/all_items(off).png</normaloff>
              <normalon>:/icon/icon/all_items(on).png</normalon>:/icon/icon/all_items(off).png</iconset>
            </property>
@@ -195,7 +195,7 @@
             <string/>
            </property>
            <property name="pixmap">
-            <pixmap resource="../static/resource.qrc">:/icon/icon/app_logo.png</pixmap>
+            <pixmap resource="static/resource.qrc">:/icon/icon/app_logo.png</pixmap>
            </property>
            <property name="scaledContents">
             <bool>true</bool>
@@ -234,7 +234,7 @@
             <string>Databse</string>
            </property>
            <property name="icon">
-            <iconset resource="../static/resource.qrc">
+            <iconset resource="static/resource.qrc">
              <normaloff>:/icon/icon/vault(off).png</normaloff>
              <normalon>:/icon/icon/vault(on).png</normalon>:/icon/icon/vault(off).png</iconset>
            </property>
@@ -265,7 +265,7 @@
             <string>Favourites</string>
            </property>
            <property name="icon">
-            <iconset resource="../static/resource.qrc">
+            <iconset resource="static/resource.qrc">
              <normaloff>:/icon/icon/favourites(off).png</normaloff>
              <normalon>:/icon/icon/favourites(on).png</normalon>:/icon/icon/favourites(off).png</iconset>
            </property>
@@ -289,7 +289,7 @@
             <string>All Items</string>
            </property>
            <property name="icon">
-            <iconset resource="../static/resource.qrc">
+            <iconset resource="static/resource.qrc">
              <normaloff>:/icon/icon/all_items(off).png</normaloff>
              <normalon>:/icon/icon/all_items(on).png</normalon>:/icon/icon/all_items(off).png</iconset>
            </property>
@@ -380,7 +380,7 @@
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../static/resource.qrc">
+             <iconset resource="static/resource.qrc">
               <normaloff>:/icon/icon/sidebar_list.ico</normaloff>:/icon/icon/sidebar_list.ico</iconset>
             </property>
             <property name="iconSize">
@@ -422,7 +422,7 @@
                <string/>
               </property>
               <property name="icon">
-               <iconset resource="../static/resource.qrc">
+               <iconset resource="static/resource.qrc">
                 <normaloff>:/icon/icon/search.ico</normaloff>:/icon/icon/search.ico</iconset>
               </property>
              </widget>
@@ -443,13 +443,13 @@
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="sort_btn">
+           <widget class="QPushButton" name="add_btn">
             <property name="text">
              <string/>
             </property>
             <property name="icon">
-             <iconset resource="../static/resource.qrc">
-              <normaloff>:/icon/icon/sort.ico</normaloff>:/icon/icon/sort.ico</iconset>
+             <iconset resource="static/resource.qrc">
+              <normaloff>:/icon/icon/add.png</normaloff>:/icon/icon/add.png</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -486,7 +486,7 @@
          <widget class="QWidget" name="favourite_page">
           <layout class="QGridLayout" name="gridLayout_3">
            <item row="0" column="0">
-            <widget class="QTableWidget" name="tableWidget">
+            <widget class="QTableWidget" name="account_table">
              <property name="focusPolicy">
               <enum>Qt::NoFocus</enum>
              </property>
@@ -500,7 +500,7 @@
               <enum>Qt::NoPen</enum>
              </property>
              <property name="rowCount">
-              <number>2</number>
+              <number>0</number>
              </property>
              <attribute name="horizontalHeaderDefaultSectionSize">
               <number>120</number>
@@ -511,8 +511,6 @@
              <attribute name="verticalHeaderVisible">
               <bool>false</bool>
              </attribute>
-             <row/>
-             <row/>
              <column>
               <property name="text">
                <string>#</string>
@@ -533,16 +531,6 @@
                <string>Operation</string>
               </property>
              </column>
-             <item row="0" column="0">
-              <property name="text">
-               <string>1</string>
-              </property>
-             </item>
-             <item row="1" column="0">
-              <property name="text">
-               <string>2</string>
-              </property>
-             </item>
             </widget>
            </item>
           </layout>
@@ -572,7 +560,7 @@
   </widget>
  </widget>
  <resources>
-  <include location="../static/resource.qrc"/>
+  <include location="static/resource.qrc"/>
  </resources>
  <connections>
   <connection>
@@ -614,8 +602,8 @@
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>46</x>
-     <y>89</y>
+     <x>47</x>
+     <y>80</y>
     </hint>
     <hint type="destinationlabel">
      <x>80</x>
@@ -630,8 +618,8 @@
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>44</x>
-     <y>147</y>
+     <x>45</x>
+     <y>113</y>
     </hint>
     <hint type="destinationlabel">
      <x>77</x>
@@ -646,8 +634,8 @@
    <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>37</x>
-     <y>183</y>
+     <x>38</x>
+     <y>146</y>
     </hint>
     <hint type="destinationlabel">
      <x>73</x>
@@ -666,8 +654,8 @@
      <y>79</y>
     </hint>
     <hint type="destinationlabel">
-     <x>52</x>
-     <y>83</y>
+     <x>50</x>
+     <y>80</y>
     </hint>
    </hints>
   </connection>
@@ -682,8 +670,8 @@
      <y>131</y>
     </hint>
     <hint type="destinationlabel">
-     <x>45</x>
-     <y>157</y>
+     <x>46</x>
+     <y>113</y>
     </hint>
    </hints>
   </connection>
@@ -698,8 +686,8 @@
      <y>169</y>
     </hint>
     <hint type="destinationlabel">
-     <x>46</x>
-     <y>197</y>
+     <x>47</x>
+     <y>146</y>
     </hint>
    </hints>
   </connection>
