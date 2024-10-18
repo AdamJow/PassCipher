@@ -6,6 +6,11 @@ from .ciphers import file_operations, substitution
 
 class MainWindow(QMainWindow):
     def __init__(self):
+        """
+        Initialise the ui, databse and style of the app upon first startup
+
+        :param self: The instance of the class
+        """
         super(MainWindow, self).__init__()
 
         # Set up GUI
@@ -23,23 +28,40 @@ class MainWindow(QMainWindow):
 
         self.ui.sort_btn.clicked.connect(self.on_button_click)
 
-    # Functions for changing pages
     def on_vault_btn_1_toggled(self):
+        """
+        Change to database page
+        """
         self.ui.stackedWidget.setCurrentIndex(0)
 
     def on_vault_btn_2_toggled(self):
+        """
+        Change to database page
+        """
         self.ui.stackedWidget.setCurrentIndex(0)
 
     def on_favourites_btn_1_toggled(self):
+        """
+        Change to favourites page
+        """
         self.ui.stackedWidget.setCurrentIndex(1)
 
     def on_favourites_btn_2_toggled(self):
+        """
+        Change to favourites page
+        """
         self.ui.stackedWidget.setCurrentIndex(1)
 
     def on_accounts_btn_1_toggled(self):
+        """
+        Change to all accounts page
+        """
         self.ui.stackedWidget.setCurrentIndex(2)
 
     def on_accounts_btn_2_toggled(self):
+        """
+        Change to all accoutns page
+        """
         self.ui.stackedWidget.setCurrentIndex(2)
 
     # Testing inital logic
@@ -49,6 +71,11 @@ class MainWindow(QMainWindow):
 
     # Close Db when app closes
     def closeEvent(self, event):        
+        """
+        Close connection to databse when app closes
+
+        :param event: The close event
+        """
         self.db.close_connection()
         event.accept()
 

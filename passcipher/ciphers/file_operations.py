@@ -1,7 +1,11 @@
 import os
 
-# Save the substitution mapping to a file
 def save_substitution_mapping(substitution_mapping):
+    """
+    Save the substitution mapping to a file
+
+    :param substitution_mapping: The substitution cipher that will be stored
+    """
     # Get the directory of the current file (cipher folder)
     current_dir = os.path.dirname(__file__)
 
