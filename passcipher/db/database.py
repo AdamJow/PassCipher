@@ -62,3 +62,45 @@ class Database:
         except sqlite3.Error as e:
             print(e)
             return None
+        
+    def get_data(self, table, filters=None):
+            """
+            Fetch data from a specified table with optional filters.
+
+            :param table: Table name to fetch data from (e.g., 'accounts', 'groups').
+            :param filters: specify collum pairs to filter results (e.g., {'account_name': 'example'}).
+            :return: List of rows fetched from the table.
+            """
+            try:
+                # Base SQL query
+                query = f"SELECT * FROM {table} as T "
+                
+                # If filters are provided, build the WHERE clause
+                if filters:
+                    query += "WHERE "
+                    filter_conditions = []
+
+                    for index, key in enumerate(filters.keys()):
+                        if index == 0:
+                            # First condition
+                            filter_conditions.append(f"T.{key} = ?")
+                        else:
+                            # Subsequent conditions
+                            filter_conditions.append(f"AND T.{key} = ?")
+
+                    # Join all filter conditions togethor and add to the base query
+                    query += " ".join(filter_conditions)
+                
+                # Execute the query with filter values if filters exist
+                if filters:
+                    self.cursor.execute(query, tuple(filters.values()))
+                else:
+                    self.cursor.execute(query)
+
+                # Fetch and return all rows
+                rows = self.cursor.fetchall()
+                return rows
+
+            except sqlite3.Error as e:
+                print(e)
+                return None
