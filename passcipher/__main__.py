@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
         self.ui.vault_btn_2.setChecked(True)
 
         # Connect the add button click signal
-        self.ui.add_btn.clicked.connect(self.open_add_from)
+        self.ui.add_btn.clicked.connect(self.add_account_form)
 
     def on_vault_btn_1_toggled(self):
         """
@@ -70,84 +70,116 @@ class MainWindow(QMainWindow):
         """
         self.ui.stackedWidget.setCurrentIndex(2)
 
-    """
-    Note: i should break this into two functions.
-    One function to iterate over all of the data
-    The second function to insert data into the table each iteration
-
-    Keep in mind that these function will be used with the search capbility as well.
-
-    I also need an effective way to display these account list
-        - On intiial load, you will need to load all of them (i.e iterate over all data)
-        - But when the user adds an account, I only need append that account to the list 
-            (not iterate ovr all again)
-        - The same applies for the edit (just update those specific details)
-        - And delete will shift everything below it up one cell
-    """
-    def display_accounts(self, data):
+    def create_edit_btn(self):
         """
-        Display account data in UI table
+        Create edit button
+
+        :return widget: Newly created edit button widget
         """
-        # Clear existing rows
+        # Create edit button
+        self.edit_btn = QPushButton("Edit")
+        self.edit_btn.setObjectName("edit_btn")
+        self.edit_btn.clicked.connect(self.edit_account)
+
+        # Position button
+        layout = QHBoxLayout()
+        layout.addWidget(self.edit_btn)
+        layout.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        layout.setContentsMargins(0,0,0,0)
+        widget = QWidget()
+        widget.setLayout(layout)
+        
+        return widget
+
+    def display_account(self, data):
+        """
+        Display new account to the end row of the Ui table
+        """
+        new_row = self.ui.account_table.rowCount() + 1
+        self.ui.account_table.setRowCount(new_row)
+
+        # Get the group data
+        print(f'group id = {data[6]}')
+        group_data = self.db.get_data('groups', {'id': data[6]})
+        
+        # Get the group name
+        if group_data and len(group_data) > 0:
+            # Get the first tuple from the result
+            group = group_data[0]
+            # Get the groupname variable from tuple
+            group_name = group[1]
+        else:
+            group_name = "Unknown Group"
+        
+        # Extract necessary fields from account tuple
+        account_name = data[1]
+
+        # Set row items
+        self.ui.account_table.setItem(new_row - 1, 0, QTableWidgetItem(str(new_row)))
+        self.ui.account_table.setItem(new_row - 1, 1, QTableWidgetItem(str(account_name)))
+        self.ui.account_table.setItem(new_row - 1, 2, QTableWidgetItem(str(group_name)))
+        self.ui.account_table.setCellWidget(new_row - 1, 3, self.create_edit_btn())
+
+    def display_accounts(self):
+        """
+        Display accounts in the Ui table
+        """
         self.ui.account_table.setRowCount(0)
+        data = self.db.get_data('accounts')
 
-        # Iterate through each account tuple in the data list
         for account in data:
-            # Insert new row into the table
-            new_row_count = self.ui.account_table.rowCount()
-            self.ui.account_table.insertRow(new_row_count)
-            
-            # Extract necessary fields from account tuple
-            account_name = account[1]  # Account name
-            category = account[6]  # Category
+            self.display_account(account)
 
-            # Set table items (adjust column indices as needed)
-            self.ui.account_table.setItem(new_row_count, 0, QTableWidgetItem(str(new_row_count)))
-            self.ui.account_table.setItem(new_row_count, 1, QTableWidgetItem(str(account_name)))
-            self.ui.account_table.setItem(new_row_count, 2, QTableWidgetItem(str(category)))
-            
-            # Put button in last column
-            self.edit_btn = QPushButton("Edit")
-            self.edit_btn.setObjectName("edit_btn")
-            layout = QHBoxLayout()
-            layout.addWidget(self.edit_btn)
-            layout.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-            layout.setContentsMargins(0,0,0,0)
-            widget = QWidget()
-            widget.setLayout(layout)
-            
-            self.ui.account_table.setCellWidget(new_row_count, 3, widget)
-
-    def extract_add_form_data(self, dialog):
+    def edit_account(self):
         """
-        Extracts the user input from the Add Account dialog form and processes it.
+        Display the edit account form pop up
+        """
+        button = self.sender()
+        row = self.ui.account_table.indexAt(button.parent().pos()).row()
+        
+        print(f'edit button clicked. Row = {row}')
+
+    def save_account(self, dialog):
+        """
+        Extracts the user input from the Add Account dialog form and save it.
         
         :param dialog: The dialog instance containing the form
         """
+        # Extract from data
         account_name = dialog.ui.account_input.toPlainText()
         username = dialog.ui.username_input.toPlainText()
         url = dialog.ui.url_input.toPlainText()
         cipher = dialog.ui.cipher_choice.currentText()
-        cipher_key = dialog.ui.key_input.toPlainText()
-        group = dialog.ui.group_input.toPlainText()
-
-        print(f"Account Name: {account_name}")
-        print(f"Username: {username}")
-        print(f"URL: {url}")
-        print(f"Cipher: {cipher}")
-        print(f"Cipher Key: {cipher_key}")
-        print(f"Group: {group}")
-
-        # Close form
-        dialog.accept()
+        notes = dialog.ui.notes_input.toPlainText()
+        group_name = dialog.ui.group_input.toPlainText()
 
         # Create and save cipher map txt file
         cipher = substitution.gen_substitution_mapping()
         cipher_location = file_operations.save_substitution_mapping(cipher)
 
-        # Implement Add account here (need to have Id generation logic here as well)
+        # Check if group exists
+        group_data = self.db.get_data('groups', {'group_name': group_name})
+        if not group_data:
+            group_id = self.db.add_group((group_name,))
+        else:
+            # Get the first tuple from the result
+            group = group_data[0]
+            # Get the groupname variable from tuple
+            group_id = group[0]
+        
+        # Create account entry
+        account = (account_name, username, url, cipher_location, notes, group_id)
 
-    def open_add_from(self):      
+        # Add account to accounts db table
+        account_id = self.db.add_account(account)
+
+        # Add account to accounts Ui table
+        self.display_account((account_id, account_name, username, url, cipher_location, notes, group_id))
+
+        # Close form
+        dialog.accept()
+
+    def add_account_form(self):      
         """
         Display the add account form pop up
         """
@@ -156,7 +188,7 @@ class MainWindow(QMainWindow):
         dialog.ui.setupUi(dialog)
 
         # Connect the 'create_btn' to extract data
-        dialog.ui.create_btn.clicked.connect(lambda: self.extract_add_form_data(dialog))
+        dialog.ui.create_btn.clicked.connect(lambda: self.save_account(dialog))
 
         dialog.exec_()
 

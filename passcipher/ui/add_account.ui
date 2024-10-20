@@ -120,14 +120,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="key_heading">
+        <widget class="QLabel" name="notes_heading">
          <property name="text">
-          <string>Cipher Key</string>
+          <string>Notes</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPlainTextEdit" name="key_input">
+        <widget class="QPlainTextEdit" name="notes_input">
          <property name="maximumSize">
           <size>
            <width>16777215</width>

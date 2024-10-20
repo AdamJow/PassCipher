@@ -37,11 +37,11 @@ class Database:
         """
         sql_statements = [ 
             """CREATE TABLE IF NOT EXISTS groups (
-                    id INTEGER PRIMARY KEY NOT NULL, 
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, 
                     group_name TEXT NOT NULL
             );""",
             """CREATE TABLE IF NOT EXISTS accounts (
-                    id INTEGER PRIMARY KEY NOT NULL, 
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                     account_name TEXT NOT NULL, 
                     username TEXT NOT NULL, 
                     url TEXT, 
@@ -68,6 +68,27 @@ class Database:
         if self.conn:
             self.conn.close()
 
+    def add_group(self, group):
+        """
+        Add new group tuple to the group table
+
+        :param group: The group tuple containing the data
+        :return: Return the Id of the newly added group
+        """ 
+        sql = ''' INSERT INTO groups(group_name)
+                VALUES(?) '''
+        try:
+            self.cursor.execute(sql, group)
+            self.conn.commit()
+
+            # Return the id of new group
+            group_id = self.cursor.lastrowid
+            return group_id
+        except sqlite3.Error as e:
+            print(e)
+            self.conn.rollback()
+            return None
+    
     def add_account(self, account):
         """
         Add new account tuple to the account table
@@ -75,14 +96,15 @@ class Database:
         :param account: The account tuple containing the data
         :return: Return the Id of the newly added account
         """ 
-        sql = ''' INSERT INTO accounts(id, account_name, username, url, cipher_location, notes, group_id)
-                VALUES(?,?,?,?,?,?,?) '''
+        sql = ''' INSERT INTO accounts(account_name, username, url, cipher_location, notes, group_id)
+                VALUES(?,?,?,?,?,?) '''
         try:
             self.cursor.execute(sql, account)
             self.conn.commit()
 
-            # Return the id of the last row
-            return self.cursor.lastrowid
+            # Return the id of new account
+            account_id = self.cursor.lastrowid
+            return account_id
         except sqlite3.Error as e:
             print(e)
             self.conn.rollback()
