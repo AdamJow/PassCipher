@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QDialog, QTableWidgetItem, QPushButton, \
-    QHBoxLayout, QWidget
+    QHBoxLayout, QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
 from .ui.sidebar_ui import Ui_MainWindow
 from .db.database import Database
@@ -30,6 +30,7 @@ class MainWindow(QMainWindow):
         self.ui.icon_only_widget.hide()
         self.ui.stackedWidget.setCurrentIndex(0)
         self.ui.vault_btn_2.setChecked(True)
+        self.display_accounts()
 
         # Connect the add button click signal
         self.ui.add_btn.clicked.connect(self.add_account_form)
@@ -90,6 +91,20 @@ class MainWindow(QMainWindow):
         widget.setLayout(layout)
         
         return widget
+    
+    def create_category_btn(self, category_name):
+        """
+        Create category button
+
+        :return widget: Newly created category button widget
+        """
+        # Create category button
+        self.category_btn = QPushButton(category_name)
+        self.category_btn.setObjectName("category_btn")
+        self.category_btn.clicked.connect(self.category_list)
+
+        # Create button
+        self.ui.sidebar_btns_2.addWidget(self.category_btn)
 
     def display_account(self, data):
         """
@@ -161,6 +176,7 @@ class MainWindow(QMainWindow):
         group_data = self.db.get_data('groups', {'group_name': group_name})
         if not group_data:
             group_id = self.db.add_group((group_name,))
+            self.create_category_btn(group_name)
         else:
             # Get the first tuple from the result
             group = group_data[0]
@@ -191,6 +207,12 @@ class MainWindow(QMainWindow):
         dialog.ui.create_btn.clicked.connect(lambda: self.save_account(dialog))
 
         dialog.exec_()
+
+    def category_list(self):
+        """
+        Display the accounts under certain category
+        """
+        print('category button clicked')
 
     # Close Db when app closes
     def closeEvent(self, event):        
