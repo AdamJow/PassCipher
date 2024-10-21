@@ -2,6 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QDialog, QTableWidgetItem, QPushButton, \
     QHBoxLayout, QWidget, QVBoxLayout
+from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 from .ui.sidebar_ui import Ui_MainWindow
 from .db.database import Database
@@ -40,36 +41,43 @@ class MainWindow(QMainWindow):
         Change to database page
         """
         self.ui.stackedWidget.setCurrentIndex(0)
+        self.uncheck_category_icons()
 
     def on_vault_btn_2_toggled(self):
         """
         Change to database page
         """
         self.ui.stackedWidget.setCurrentIndex(0)
+        self.uncheck_category_icons()
 
     def on_favourites_btn_1_toggled(self):
         """
         Change to favourites page
         """
         self.ui.stackedWidget.setCurrentIndex(1)
+        self.uncheck_category_icons()
 
     def on_favourites_btn_2_toggled(self):
         """
         Change to favourites page
         """
         self.ui.stackedWidget.setCurrentIndex(1)
+        self.uncheck_category_icons()
 
     def on_accounts_btn_1_toggled(self):
         """
         Change to all accounts page
         """
         self.ui.stackedWidget.setCurrentIndex(2)
+        self.uncheck_category_icons()
 
     def on_accounts_btn_2_toggled(self):
         """
         Change to all accoutns page
         """
         self.ui.stackedWidget.setCurrentIndex(2)
+        self.uncheck_category_icons()
+        
 
     def create_edit_btn(self):
         """
@@ -92,6 +100,25 @@ class MainWindow(QMainWindow):
         
         return widget
     
+    def update_category_icon(self, checked, button):
+        """
+        Update the icon based on the checked state of the button
+        """
+        if checked:
+            button.setIcon(QIcon("passcipher/ui/static/icon/category(on).png"))
+        else:
+            button.setIcon(QIcon("passcipher/ui/static/icon/category(off).png"))
+
+    def uncheck_category_icons(self):
+        """
+        Update the icon based of the category buttons to unchecked state
+        """
+        # Ensure the category button for this group is toggled and icon is updated
+        for i in range(6, self.ui.sidebar_btns_2.count()):
+            btn = self.ui.sidebar_btns_2.itemAt(i).widget()
+            btn.setChecked(False)
+            self.update_category_icon(False, btn)
+    
     def create_category_btn(self, category_name):
         """
         Create category button
@@ -101,7 +128,20 @@ class MainWindow(QMainWindow):
         # Create category button
         self.category_btn = QPushButton(category_name)
         self.category_btn.setObjectName("category_btn")
-        self.category_btn.clicked.connect(self.category_list)
+        
+        # Connect to function
+        self.category_btn.clicked.connect(lambda: self.category_list(category_name))
+        
+        # Attatch icon
+        icon = QIcon("passcipher/ui/static/icon/category(off).png")
+        self.category_btn.setIcon(icon)
+
+        # Set the button to be checkable and auto-exclusive
+        self.category_btn.setCheckable(True)
+        self.category_btn.setAutoExclusive(True)
+
+        # Connect button to update icon when checked
+        self.category_btn.toggled.connect(lambda checked: self.update_category_icon(checked, self.category_btn))
 
         # Create button
         self.ui.sidebar_btns_2.addWidget(self.category_btn)
@@ -114,15 +154,12 @@ class MainWindow(QMainWindow):
         self.ui.account_table.setRowCount(new_row)
 
         # Get the group data
-        print(f'group id = {data[6]}')
         group_data = self.db.get_data('groups', {'id': data[6]})
         
         # Get the group name
         if group_data and len(group_data) > 0:
             # Get the first tuple from the result
-            group = group_data[0]
-            # Get the groupname variable from tuple
-            group_name = group[1]
+            group_name = group_data[0][1]
         else:
             group_name = "Unknown Group"
         
@@ -151,8 +188,6 @@ class MainWindow(QMainWindow):
         """
         button = self.sender()
         row = self.ui.account_table.indexAt(button.parent().pos()).row()
-        
-        print(f'edit button clicked. Row = {row}')
 
     def save_account(self, dialog):
         """
@@ -179,9 +214,7 @@ class MainWindow(QMainWindow):
             self.create_category_btn(group_name)
         else:
             # Get the first tuple from the result
-            group = group_data[0]
-            # Get the groupname variable from tuple
-            group_id = group[0]
+            group_id = group_data[0][0]
         
         # Create account entry
         account = (account_name, username, url, cipher_location, notes, group_id)
@@ -208,11 +241,40 @@ class MainWindow(QMainWindow):
 
         dialog.exec_()
 
-    def category_list(self):
+    def category_list(self, category_name):
         """
         Display the accounts under certain category
         """
-        print('category button clicked')
+        # Clear existing accounts displayed in the table
+        self.ui.account_table.setRowCount(0)
+
+        # Fetch the group data corresponding to the category_name
+        group_data = self.db.get_data('groups', {'group_name': category_name})
+        if not group_data:
+            print(f'No group found for {category_name}')
+            return
+
+        # Get the group ID from the group data
+        group_id = group_data[0][0]
+
+        # Fetch accounts associated with this group_id
+        accounts = self.db.get_data('accounts', {'group_id': group_id})
+
+        for account in accounts:
+            self.display_account(account)
+
+        # Change to account list page (favourites page)
+        self.ui.stackedWidget.setCurrentIndex(1)
+
+        # Ensure the category button for this group is toggled and icon is updated
+        for i in range(6, self.ui.sidebar_btns_2.count()):
+            btn = self.ui.sidebar_btns_2.itemAt(i).widget()
+            if btn.text() == category_name:
+                btn.setChecked(True)
+                self.update_category_icon(True, btn)
+            else:
+                btn.setChecked(False)
+                self.update_category_icon(False, btn)
 
     # Close Db when app closes
     def closeEvent(self, event):        

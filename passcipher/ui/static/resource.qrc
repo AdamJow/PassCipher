@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icon">
+    <file>icon/category(off).png</file>
+    <file>icon/category(on).png</file>
     <file>icon/add.png</file>
     <file>icon/vault(on).png</file>
     <file>icon/vault(off).png</file>
