@@ -31,7 +31,9 @@ class MainWindow(QMainWindow):
         self.ui.icon_only_widget.hide()
         self.ui.stackedWidget.setCurrentIndex(0)
         self.ui.vault_btn_2.setChecked(True)
-        self.display_accounts()
+
+        # Setup variables
+        self.category_page = None
 
         # Connect the add button click signal
         self.ui.add_btn.clicked.connect(self.add_account_form)
@@ -42,6 +44,7 @@ class MainWindow(QMainWindow):
         """
         self.ui.stackedWidget.setCurrentIndex(0)
         self.uncheck_category_icons()
+        self.category_page = None
 
     def on_vault_btn_2_toggled(self):
         """
@@ -49,6 +52,7 @@ class MainWindow(QMainWindow):
         """
         self.ui.stackedWidget.setCurrentIndex(0)
         self.uncheck_category_icons()
+        self.category_page = None
 
     def on_favourites_btn_1_toggled(self):
         """
@@ -56,6 +60,7 @@ class MainWindow(QMainWindow):
         """
         self.ui.stackedWidget.setCurrentIndex(1)
         self.uncheck_category_icons()
+        self.category_page = None
 
     def on_favourites_btn_2_toggled(self):
         """
@@ -63,20 +68,25 @@ class MainWindow(QMainWindow):
         """
         self.ui.stackedWidget.setCurrentIndex(1)
         self.uncheck_category_icons()
+        self.category_page = None
 
     def on_accounts_btn_1_toggled(self):
         """
         Change to all accounts page
         """
-        self.ui.stackedWidget.setCurrentIndex(2)
+        self.ui.stackedWidget.setCurrentIndex(1)
+        self.display_all_accounts()
         self.uncheck_category_icons()
+        self.category_page = None
 
     def on_accounts_btn_2_toggled(self):
         """
         Change to all accoutns page
         """
-        self.ui.stackedWidget.setCurrentIndex(2)
+        self.ui.stackedWidget.setCurrentIndex(1)
+        self.display_all_accounts()
         self.uncheck_category_icons()
+        self.category_page = None
         
 
     def create_edit_btn(self):
@@ -172,9 +182,9 @@ class MainWindow(QMainWindow):
         self.ui.account_table.setItem(new_row - 1, 2, QTableWidgetItem(str(group_name)))
         self.ui.account_table.setCellWidget(new_row - 1, 3, self.create_edit_btn())
 
-    def display_accounts(self):
+    def display_all_accounts(self):
         """
-        Display accounts in the Ui table
+        Display all accounts in the Ui table
         """
         self.ui.account_table.setRowCount(0)
         data = self.db.get_data('accounts')
@@ -222,8 +232,27 @@ class MainWindow(QMainWindow):
         # Add account to accounts db table
         account_id = self.db.add_account(account)
 
-        # Add account to accounts Ui table
-        self.display_account((account_id, account_name, username, url, cipher_location, notes, group_id))
+        # Add account to accounts Ui table (if applicable)
+        current_page_index = self.ui.stackedWidget.currentIndex()
+        if current_page_index == 1:
+            # Check what sidebar button is checked
+            for i in range(0, self.ui.sidebar_btns_2.count()):
+                btn = self.ui.sidebar_btns_2.itemAt(i).widget()
+                # Ensure the widget is a QPushButton (or any other widget type that can be checked)
+                if isinstance(btn, QPushButton) and btn.isChecked():
+                    btn_name = btn.text()
+                    print(btn_name)
+                    break
+
+            # All Accounts Page
+            if btn_name == 'All Items':
+                self.display_account((account_id, account_name, username, url, cipher_location, notes, group_id))
+            # Favourites Accounts Page
+            elif btn_name == 'Favourites':
+                self.display_account((account_id, account_name, username, url, cipher_location, notes, group_id))
+            # Category Accounts Page
+            elif group_name == self.category_page:
+                self.display_account((account_id, account_name, username, url, cipher_location, notes, group_id))
 
         # Close form
         dialog.accept()
@@ -263,7 +292,7 @@ class MainWindow(QMainWindow):
         for account in accounts:
             self.display_account(account)
 
-        # Change to account list page (favourites page)
+        # Change to account list page (accounts page)
         self.ui.stackedWidget.setCurrentIndex(1)
 
         # Ensure the category button for this group is toggled and icon is updated
@@ -271,6 +300,7 @@ class MainWindow(QMainWindow):
             btn = self.ui.sidebar_btns_2.itemAt(i).widget()
             if btn.text() == category_name:
                 btn.setChecked(True)
+                self.category_page = category_name
                 self.update_category_icon(True, btn)
             else:
                 btn.setChecked(False)
