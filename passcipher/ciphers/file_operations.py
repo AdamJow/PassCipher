@@ -1,6 +1,6 @@
 import os
 
-def save_substitution_mapping(substitution_mapping):
+def save_substitution_mapping(substitution_mapping, account_name):
     """
     Save the substitution mapping to a file
 
@@ -18,8 +18,11 @@ def save_substitution_mapping(substitution_mapping):
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
 
+    # Generate file path with the format 'accountname_cipher.txt'
+    file_name = f"{account_name}_cipher.txt"
+    file_path = os.path.join(data_dir, file_name)
+
     # Save the mapping to a file in the chosen directory
-    file_path = os.path.join(data_dir, "cipher.txt")
     with open(file_path, 'w') as f:
         for original, substituted in substitution_mapping.items():
             f.write(f"{original}:{substituted}\n")

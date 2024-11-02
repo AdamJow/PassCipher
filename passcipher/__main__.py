@@ -331,7 +331,7 @@ class MainWindow(QMainWindow):
                 # Call edit account pop up
                 self.edit_account_form(selected_account, btn_name, row)
 
-    def generate_cipher(self, cipher_choice):
+    def generate_cipher(self, cipher_choice, account_name):
         """
         Generate chosen cipher mapping and save file
         
@@ -344,11 +344,9 @@ class MainWindow(QMainWindow):
             cipher = substitution.gen_substitution_mapping()
         else:
             print('other cipher chosen')
-            #### CHANGE TO APPROPRIATE CIPHER LOGIC FUNCTION WHEN IVE MADE IT #####
-            cipher = substitution.gen_substitution_mapping()
 
         # Save cipher map txt file and return location
-        return file_operations.save_substitution_mapping(cipher)
+        return file_operations.save_substitution_mapping(cipher, account_name)
 
     def get_group(self, group_name):
         """
@@ -388,7 +386,7 @@ class MainWindow(QMainWindow):
         username = dialog.ui.username_input.toPlainText()
         url = dialog.ui.url_input.toPlainText()
         cipher_choice = dialog.ui.cipher_choice.currentText()
-        cipher_location = self.generate_cipher(cipher_choice)
+        cipher_location = self.generate_cipher(cipher_choice, account_name)
         notes = dialog.ui.notes_input.toPlainText()
         group_name = dialog.ui.group_input.toPlainText()
 

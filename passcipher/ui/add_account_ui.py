@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'passcipher\ui\add_account.ui'
+# Form implementation generated from reading ui file 'c:\Users\Adam\Projects\UNSW\comp6441\PassCipher\passcipher\ui\add_account.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.11
 #
@@ -55,7 +55,6 @@ class Ui_Dialog(object):
         self.cipher_choice.setMaximumSize(QtCore.QSize(16777215, 30))
         self.cipher_choice.setObjectName("cipher_choice")
         self.cipher_choice.addItem("")
-        self.cipher_choice.addItem("")
         self.verticalLayout.addWidget(self.cipher_choice)
         self.notes_heading = QtWidgets.QLabel(self.scrollAreaWidgetContents)
         self.notes_heading.setObjectName("notes_heading")
@@ -90,7 +89,6 @@ class Ui_Dialog(object):
         self.url_heading.setText(_translate("Dialog", "URL"))
         self.cipher_heading.setText(_translate("Dialog", "Password Encyption Cipher"))
         self.cipher_choice.setItemText(0, _translate("Dialog", "Substitution Cipher"))
-        self.cipher_choice.setItemText(1, _translate("Dialog", "Caesar Cipher"))
         self.notes_heading.setText(_translate("Dialog", "Notes"))
         self.group_heading.setText(_translate("Dialog", "Group"))
         self.create_btn.setText(_translate("Dialog", "Create"))
