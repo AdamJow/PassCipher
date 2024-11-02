@@ -8,7 +8,8 @@ from .ui.sidebar_ui import Ui_MainWindow
 from .db.database import Database
 from .ciphers import file_operations, substitution
 
-from .ui.add_account_ui import Ui_Dialog
+from .ui.add_account_ui import Ui_Dialog as add_Dialog
+from .ui.edit_account_ui import Ui_Dialog as edit_Dialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -32,11 +33,18 @@ class MainWindow(QMainWindow):
         self.ui.stackedWidget.setCurrentIndex(0)
         self.ui.vault_btn_2.setChecked(True)
 
+        # Display category buttons
+        self.init_category_btns()
+
         # Setup variables
         self.category_page = None
 
         # Connect the add button click signal
         self.ui.add_btn.clicked.connect(self.add_account_form)
+
+    ##############################
+    # Functions for Page Change
+    ##############################
 
     def on_vault_btn_1_toggled(self):
         """
@@ -88,6 +96,17 @@ class MainWindow(QMainWindow):
         self.uncheck_category_icons()
         self.category_page = None
         
+    ##############################
+    # Functions for Ui
+    ##############################
+
+    def init_category_btns(self):
+        """
+        Display Category buttons on initial app startup
+        """
+        group_data = self.db.get_data('groups')
+        for group_data in group_data:
+            self.create_category_btn(group_data[1])
 
     def create_edit_btn(self):
         """
@@ -156,6 +175,55 @@ class MainWindow(QMainWindow):
         # Create button
         self.ui.sidebar_btns_2.addWidget(self.category_btn)
 
+    def get_checked_btn(self):
+        """
+        Get the name of the checked sidebar button.
+        
+        :return: The name of the checked button or None if no button is checked
+        """
+        for i in range(self.ui.sidebar_btns_2.count()):
+            btn = self.ui.sidebar_btns_2.itemAt(i).widget()
+            if isinstance(btn, QPushButton) and btn.isChecked():
+                return btn.text()
+        return None
+    
+    def add_account_form(self):      
+        """
+        Display the add account form pop up
+        """
+        dialog = QDialog()
+        dialog.ui = add_Dialog()
+        dialog.ui.setupUi(dialog)
+
+        # Connect the 'create_btn' to extract data
+        dialog.ui.create_btn.clicked.connect(lambda: self.save_account(dialog))
+
+        dialog.exec_()
+
+    def edit_account_form(self, account_details, group_name, row):      
+        """
+        Display the edit account form pop up
+        """
+        dialog = QDialog()
+        dialog.ui = edit_Dialog()
+        dialog.ui.setupUi(dialog)
+
+        # Populate fields with account details
+        dialog.ui.account_input.setPlainText(f'{account_details[1]}')
+        dialog.ui.username_input.setPlainText(f'{account_details[2]}')
+        dialog.ui.url_input.setPlainText(f'{account_details[3]}')
+        dialog.ui.notes_input.setPlainText(f'{account_details[5]}')
+        dialog.ui.group_input.setPlainText(f'{group_name}')
+
+        # Connect the 'create_btn' to extract data
+        dialog.ui.save_btn.clicked.connect(lambda: self.save_changes(dialog, group_name, account_details[0], row))
+
+        dialog.exec_()
+
+    ##############################
+    # Functions for Accounts
+    ##############################
+
     def display_account(self, data):
         """
         Display new account to the end row of the Ui table
@@ -182,12 +250,17 @@ class MainWindow(QMainWindow):
         self.ui.account_table.setItem(new_row - 1, 2, QTableWidgetItem(str(group_name)))
         self.ui.account_table.setCellWidget(new_row - 1, 3, self.create_edit_btn())
 
-    def display_all_accounts(self):
+    def display_all_accounts(self, groupId=None):
         """
         Display all accounts in the Ui table
         """
         self.ui.account_table.setRowCount(0)
-        data = self.db.get_data('accounts')
+        # Get specific group accounts
+        if groupId:
+            data = self.db.get_data('accounts', {'group_id': groupId})
+        # Get all accounts
+        else:
+            data = self.db.get_data('accounts')
 
         for account in data:
             self.display_account(account)
@@ -196,8 +269,129 @@ class MainWindow(QMainWindow):
         """
         Display the edit account form pop up
         """
+        # Get button properties
         button = self.sender()
+        btn_name = self.get_checked_btn()
+        if btn_name is None:
+            print('No Button is checked')
+            return
+
+        # Get page and row index
+        current_page_index = self.ui.stackedWidget.currentIndex()
         row = self.ui.account_table.indexAt(button.parent().pos()).row()
+
+        if current_page_index == 1:
+            if btn_name == 'All Items':
+                print('all items')
+            elif btn_name == 'Favourites':
+                print('favourites')
+            elif btn_name == self.category_page:
+                # Get Group Id and all accounts with that group Id
+                groupId = self.get_group(btn_name)
+                accounts_data = self.db.get_data('accounts', {'group_id': groupId})
+
+                # Get selected account details
+                selected_account = accounts_data[row]
+                print(selected_account)
+
+                # Call edit account pop up
+                self.edit_account_form(selected_account, btn_name, row)
+
+    def generate_cipher(self, cipher_choice):
+        """
+        Generate chosen cipher mapping and save file
+        
+        :param cipher_choice: The chosen cipher
+        :return: The location of the saved file
+        """
+        # Generate chosen Cipher
+        if cipher_choice == 'Substitution Cipher':
+            print('substitution chosen')
+            cipher = substitution.gen_substitution_mapping()
+        else:
+            print('other cipher chosen')
+            #### CHANGE TO APPROPRIATE CIPHER LOGIC FUNCTION WHEN IVE MADE IT #####
+            cipher = substitution.gen_substitution_mapping()
+
+        # Save cipher map txt file and return location
+        return file_operations.save_substitution_mapping(cipher)
+
+    def get_group(self, group_name):
+        """
+        Get the Id associated with group
+        
+        :param group_name: The name of the group
+        :return: The Id associated with the group
+        """
+        # Check if group exists
+        group_data = self.db.get_data('groups', {'group_name': group_name})
+        if not group_data:
+            print('group doesnt exist')
+            return None
+        # Get the first tuple from the result
+        return group_data[0][0]
+
+    def create_group(self, group_name):
+        """
+        Add group entry into groups table
+        
+        :param group_name: The name of the group
+        :return: The Id associated with the group
+        """
+        # Create group
+        group_id = self.db.add_group((group_name,))
+        self.create_category_btn(group_name)
+
+        return group_id
+    
+    def extract_account_details(self, dialog):
+        """
+        Extract account data from the add account dialog form.
+        
+        :param dialog: The dialog instance containing the form
+        :return: Dictionary of account data
+        """
+        account_name = dialog.ui.account_input.toPlainText()
+        username = dialog.ui.username_input.toPlainText()
+        url = dialog.ui.url_input.toPlainText()
+        cipher_choice = dialog.ui.cipher_choice.currentText()
+        cipher_location = self.generate_cipher(cipher_choice)
+        notes = dialog.ui.notes_input.toPlainText()
+        group_name = dialog.ui.group_input.toPlainText()
+
+        return {
+            'account_name': account_name,
+            'username': username,
+            'url': url,
+            'cipher_location': cipher_location,
+            'notes': notes,
+            'group_name': group_name
+        }
+
+    def update_ui_on_account_save(self, account_id, account, input_group):
+        """
+        Update the UI based on the current page and category when an account is saved.
+        
+        :param account_id: The ID of the newly saved account
+        :param account: The account details tuple
+        :param group_id: The group ID to which the account belongs
+        """
+        current_page_index = self.ui.stackedWidget.currentIndex()
+        btn_name = self.get_checked_btn()
+        if btn_name is None:
+            print('No Button is checked')
+            return
+
+        # Convert account data to a tuple with account_id prepended
+        account_with_id = (account_id,) + account
+
+        if current_page_index == 1:
+            if btn_name == 'All Items':
+                self.display_account(account_with_id)
+            elif btn_name == 'Favourites':
+                self.display_account(account_with_id)
+            elif input_group == self.category_page:
+                self.display_account(account_with_id)
 
     def save_account(self, dialog):
         """
@@ -205,70 +399,73 @@ class MainWindow(QMainWindow):
         
         :param dialog: The dialog instance containing the form
         """
-        # Extract from data
-        account_name = dialog.ui.account_input.toPlainText()
-        username = dialog.ui.username_input.toPlainText()
-        url = dialog.ui.url_input.toPlainText()
-        cipher = dialog.ui.cipher_choice.currentText()
-        notes = dialog.ui.notes_input.toPlainText()
-        group_name = dialog.ui.group_input.toPlainText()
+        # Extract and proces dialog inputs
+        account_data = self.extract_account_details(dialog)
+        groupId = self.get_group(account_data['group_name'])
+        if not groupId:
+            # Create group
+            groupId = self.create_group(account_data['group_name'])
 
-        # Create and save cipher map txt file
-        cipher = substitution.gen_substitution_mapping()
-        cipher_location = file_operations.save_substitution_mapping(cipher)
-
-        # Check if group exists
-        group_data = self.db.get_data('groups', {'group_name': group_name})
-        if not group_data:
-            group_id = self.db.add_group((group_name,))
-            self.create_category_btn(group_name)
-        else:
-            # Get the first tuple from the result
-            group_id = group_data[0][0]
-        
         # Create account entry
-        account = (account_name, username, url, cipher_location, notes, group_id)
+        account = (
+            account_data['account_name'],
+            account_data['username'],
+            account_data['url'],
+            account_data['cipher_location'],
+            account_data['notes'],
+            groupId
+        )
 
         # Add account to accounts db table
         account_id = self.db.add_account(account)
 
-        # Add account to accounts Ui table (if applicable)
-        current_page_index = self.ui.stackedWidget.currentIndex()
-        if current_page_index == 1:
-            # Check what sidebar button is checked
-            for i in range(0, self.ui.sidebar_btns_2.count()):
-                btn = self.ui.sidebar_btns_2.itemAt(i).widget()
-                # Ensure the widget is a QPushButton (or any other widget type that can be checked)
-                if isinstance(btn, QPushButton) and btn.isChecked():
-                    btn_name = btn.text()
-                    print(btn_name)
-                    break
-
-            # All Accounts Page
-            if btn_name == 'All Items':
-                self.display_account((account_id, account_name, username, url, cipher_location, notes, group_id))
-            # Favourites Accounts Page
-            elif btn_name == 'Favourites':
-                self.display_account((account_id, account_name, username, url, cipher_location, notes, group_id))
-            # Category Accounts Page
-            elif group_name == self.category_page:
-                self.display_account((account_id, account_name, username, url, cipher_location, notes, group_id))
+        # Handle UI display based on the current page and category
+        self.update_ui_on_account_save(account_id, account, account_data['group_name'])
 
         # Close form
         dialog.accept()
 
-    def add_account_form(self):      
+    def save_changes(self, dialog, group_name, accountId, row):
         """
-        Display the add account form pop up
+        Extracts the user input from the Add Account dialog form and save it.
+        
+        :param dialog: The dialog instance containing the form
         """
-        dialog = QDialog()
-        dialog.ui = Ui_Dialog()
-        dialog.ui.setupUi(dialog)
+        # Get original group Id
+        original_groupId = self.get_group(group_name)
 
-        # Connect the 'create_btn' to extract data
-        dialog.ui.create_btn.clicked.connect(lambda: self.save_account(dialog))
+        # Extract and proces dialog inputs
+        account_data = self.extract_account_details(dialog)
+        groupId = self.get_group(account_data['group_name'])
+        if not groupId:
+            # Create group
+            groupId = self.create_group(account_data['group_name'])
 
-        dialog.exec_()
+        # Create account entry
+        account = (
+            account_data['account_name'],
+            account_data['username'],
+            account_data['url'],
+            account_data['cipher_location'],
+            account_data['notes'],
+            groupId
+        )
+
+        # Convert account data to a tuple with account_id prepended
+        update_account_data =  account + (accountId,) 
+
+        # Update account in accounts db table
+        self.db.update_account(update_account_data)
+
+        # Update Current Page
+        self.display_all_accounts(original_groupId)
+
+        # Close form
+        dialog.accept()
+    
+    ##############################
+    # Functions for Categories
+    ##############################
 
     def category_list(self, category_name):
         """

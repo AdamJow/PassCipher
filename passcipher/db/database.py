@@ -152,3 +152,35 @@ class Database:
             print(e)
             self.conn.rollback()
             return None
+        
+    def update_account(self, account_details):
+        """
+        Update exisitng account entry in accounts table
+
+        :param accountId: The id of the account to update
+        :param account: A tuple containing the new data for the account
+            (account_name, username, url, cipher_location, notes, groupId, accountId)
+        :return: True if the update was successful, False otherwise
+        """ 
+        sql = ''' UPDATE accounts
+                SET account_name = ?, 
+                    username = ?, 
+                    url = ?, 
+                    cipher_location = ?, 
+                    notes = ?,
+                    group_id = ?
+                WHERE id = ? '''
+        try:
+            # Execute the update statement with the account data and accountId
+            self.cursor.execute(sql, account_details)
+            self.conn.commit()
+
+            # Check if account entry was updated
+            if self.cursor.rowcount == 0:
+                print("No account found with the given ID.")
+                return False
+            return True
+        except sqlite3.Error as e:
+            print(e)
+            self.conn.rollback()
+            return False
