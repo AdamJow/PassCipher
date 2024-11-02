@@ -36,6 +36,10 @@ class Database:
         :param self: The instance of the class
         """
         sql_statements = [ 
+            """CREATE TABLE IF NOT EXISTS user_info (
+                    username TEXT PRIMARY KEY, 
+                    verify_key TEXT
+            );""",
             """CREATE TABLE IF NOT EXISTS groups (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, 
                     group_name TEXT NOT NULL
@@ -232,3 +236,25 @@ class Database:
             print(e)
             self.conn.rollback()
             return False
+        
+    def store_user(self, username, encrypted_text):
+        """
+        Store user into user_info table
+
+        :param username: The username of the user
+        """
+        sql = ''' INSERT INTO user_info(username, verify_key)
+                VALUES(?, ?) '''
+        
+        try:
+            self.cursor.execute(sql, (username, encrypted_text))
+            self.conn.commit()
+
+            # Return the id of new account
+            user_id = self.cursor.lastrowid
+            return user_id
+
+        except sqlite3.Error as e:
+            print(e)
+            self.conn.rollback()
+            return None

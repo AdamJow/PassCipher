@@ -1,15 +1,17 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QDialog, QTableWidgetItem, QPushButton, \
-    QHBoxLayout, QWidget, QVBoxLayout
+    QHBoxLayout, QWidget, QMessageBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 from .ui.sidebar_ui import Ui_MainWindow
 from .db.database import Database
 from .ciphers import file_operations, substitution
+from passcipher.encrypt import generate_key, encrypt_data, verify_login_key
 
 from .ui.add_account_ui import Ui_Dialog as add_Dialog
 from .ui.edit_account_ui import Ui_Dialog as edit_Dialog
+from .ui.register_ui import Ui_Dialog as register_Dialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -34,23 +36,29 @@ class MainWindow(QMainWindow):
         # Set up initial page load
         self.ui.search_bar.setVisible(False)
         self.ui.icon_only_widget.hide()
-        self.ui.stackedWidget.setCurrentIndex(0)
-        self.ui.vault_btn_2.setChecked(True)
-
-        # Display category buttons
-        self.init_category_btns()
+        self.ui.full_menu_widget.hide()
 
         # Setup variables
         self.category_page = None
 
         # Connect the Ui signals
         self.ui.add_btn.clicked.connect(self.add_account_form)
+        self.ui.login_register_btn.clicked.connect(self.register_user_form)
+        self.ui.login_btn.clicked.connect(self.verify_login)
         self.ui.account_table.cellClicked.connect(self.on_account_clicked)
         self.ui.stackedWidget.currentChanged.connect(self.toggle_search_bar_visibility)
 
     ##############################
     # Functions for Page Change
     ##############################
+
+    def initial_page_setup(self):
+        self.ui.full_menu_widget.show()
+        self.ui.stackedWidget.setCurrentIndex(1)
+        self.ui.vault_btn_2.setChecked(True)
+
+        # Display category buttons
+        self.init_category_btns()
 
     def on_vault_btn_1_toggled(self):
         """
@@ -131,19 +139,42 @@ class MainWindow(QMainWindow):
         self.ui.stackedWidget.setCurrentIndex(2)
 
         # Connect back and generate button to functions
-        self.ui.back_btn.clicked.connect(self.go_back)
+        self.ui.back_btn.clicked.connect(lambda: self.go_back(1))
         self.ui.generate_btn.clicked.connect(lambda: self.on_generate_clicked(account_details[4]))
+
+    def verify_login(self):
+        username = self.ui.login_username.text()
+        key = self.ui.login_key.text()
+
+        print(f'username = {username}')
+        print(f'key = {key}')
+
+        # Get the verify key encypted text
+        verify_text = self.db.get_data('user_info')
+        if not verify_text:
+            print('bo key')
+            return None
+            
+        # use input key to decrypt verify text
+        if verify_login_key(key, verify_text[0][1]):
+            self.initial_page_setup()
+        else:
+            # inform user of incorrect
+            dlg = QMessageBox(self)
+            dlg.setWindowTitle("Error")
+            dlg.setText(f"Invalid username or master key")
+            dlg.exec()
         
     ##############################
     # Functions for Ui
     ##############################
 
-    def go_back(self):
+    def go_back(self, index):
         """
-        Navigate back to index 1 of the stacked widget.
+        Navigate back to index of the stacked widget.
         """
         # Change page
-        self.ui.stackedWidget.setCurrentIndex(1)
+        self.ui.stackedWidget.setCurrentIndex(index)
 
     def toggle_search_bar_visibility(self, index):
         """
@@ -297,6 +328,19 @@ class MainWindow(QMainWindow):
         # Connect the 'save_btn' to extract data
         dialog.ui.save_btn.clicked.connect(lambda: self.save_changes(dialog, group_name, account_details[0]))
         dialog.ui.delete_btn.clicked.connect(lambda: self.delete_account(dialog, group_name, account_details[4], account_details[0]))
+
+        dialog.exec_()
+
+    def register_user_form(self):      
+        """
+        Display the add account form pop up
+        """
+        dialog = QDialog()
+        dialog.ui = register_Dialog()
+        dialog.ui.setupUi(dialog)
+
+        # Connect the 'create_btn' to extract data
+        dialog.ui.register_create_btn.clicked.connect(lambda: self.save_user(dialog))
 
         dialog.exec_()
 
@@ -522,6 +566,35 @@ class MainWindow(QMainWindow):
 
         # Close form
         dialog.accept()
+
+    def save_user(self, dialog):
+        """
+        Extracts the user input from the register user dialog form and save it.
+        
+        :param dialog: The dialog instance containing the form
+        """
+        # Extract and proces dialog inputs
+        username = dialog.ui.register_username.toPlainText()
+
+        # Generate key
+        key = generate_key(username)
+
+        # Encode text to store in user table
+        encrypted_text = encrypt_data(key, 'testing')
+
+        # Add account to accounts db table
+        userId = self.db.store_user(username, encrypted_text)
+        print(f'user id = {userId}')
+
+        # inform user of their key
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Your Key!")
+        dlg.setText(f"Your master key was stored in {username}_key.txt. Store it somewhere safe")
+        dlg.exec()
+
+        # Close form
+        dialog.accept()
+        self.initial_page_setup()
 
     def save_changes(self, dialog, group_name, accountId):
         """
