@@ -243,8 +243,9 @@ class MainWindow(QMainWindow):
         dialog.ui.notes_input.setPlainText(f'{account_details[5]}')
         dialog.ui.group_input.setPlainText(f'{group_name}')
 
-        # Connect the 'create_btn' to extract data
-        dialog.ui.save_btn.clicked.connect(lambda: self.save_changes(dialog, group_name, account_details[0], row))
+        # Connect the 'save_btn' to extract data
+        dialog.ui.save_btn.clicked.connect(lambda: self.save_changes(dialog, group_name, account_details[0]))
+        dialog.ui.delete_btn.clicked.connect(lambda: self.delete_account(dialog, group_name, account_details[0]))
 
         dialog.exec_()
 
@@ -458,7 +459,7 @@ class MainWindow(QMainWindow):
         # Close form
         dialog.accept()
 
-    def save_changes(self, dialog, group_name, accountId, row):
+    def save_changes(self, dialog, group_name, accountId):
         """
         Extracts the user input from the Add Account dialog form and save it.
         
@@ -489,6 +490,23 @@ class MainWindow(QMainWindow):
 
         # Update account in accounts db table
         self.db.update_account(update_account_data)
+
+        # Update Current Page
+        self.display_all_accounts(original_groupId)
+
+        # Close form
+        dialog.accept()
+
+    def delete_account(self, dialog, group_name, accountId):
+        """
+        Extracts the user input from the Add Account dialog form and save it.
+        
+        :param dialog: The dialog instance containing the form
+        """
+        # Delete account in accounts db table
+        self.db.delete_account(accountId)
+
+        original_groupId = self.get_group(group_name)
 
         # Update Current Page
         self.display_all_accounts(original_groupId)

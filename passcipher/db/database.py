@@ -208,3 +208,27 @@ class Database:
             print(e)
             self.conn.rollback()
             return False
+        
+    def delete_account(self, account_id):
+        """
+        Delete a account by its ID
+
+        :param account_id: The ID of the account to delete
+        :return: True if the deletion was successful, False otherwise
+        """
+        try:
+            # First, delete associated accounts
+            delete_accounts_sql = "DELETE FROM accounts WHERE id = ?"
+            self.cursor.execute(delete_accounts_sql, (account_id,))
+            
+            self.conn.commit()
+            
+            # Check if group was deleted
+            if self.cursor.rowcount == 0:
+                print("No account found with the given ID.")
+                return False
+            return True
+        except sqlite3.Error as e:
+            print(e)
+            self.conn.rollback()
+            return False
