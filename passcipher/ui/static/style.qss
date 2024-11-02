@@ -2,7 +2,7 @@
     background-color: #fff;
 }
 
-#sidebar_btn {
+#back_btn {
     padding: 5px;
     border: none;
     width: 30px;

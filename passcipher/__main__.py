@@ -32,6 +32,7 @@ class MainWindow(QMainWindow):
         self.db.create_table()
 
         # Set up initial page load
+        self.ui.search_bar.setVisible(False)
         self.ui.icon_only_widget.hide()
         self.ui.stackedWidget.setCurrentIndex(0)
         self.ui.vault_btn_2.setChecked(True)
@@ -42,8 +43,10 @@ class MainWindow(QMainWindow):
         # Setup variables
         self.category_page = None
 
-        # Connect the add button click signal
+        # Connect the Ui signals
         self.ui.add_btn.clicked.connect(self.add_account_form)
+        self.ui.account_table.cellClicked.connect(self.on_account_clicked)
+        self.ui.stackedWidget.currentChanged.connect(self.toggle_search_bar_visibility)
 
     ##############################
     # Functions for Page Change
@@ -98,10 +101,45 @@ class MainWindow(QMainWindow):
         self.display_all_accounts()
         self.uncheck_category_icons()
         self.category_page = None
+
+    def on_account_clicked(self, row):
+        """
+        Change to view account page
+        """
+        # Get group button properties
+        page_btn = self.get_checked_btn()
+        btn_name = page_btn.text()
+        if btn_name is None:
+            print('No Button is checked')
+            return
+        
+        # Get selected account details
+        selected_account = self.get_selected_account(btn_name, row)
+        
+        # Change page
+        self.ui.stackedWidget.setCurrentIndex(2)
+
+        # Connect the back button to the go_back function
+        self.ui.back_btn.clicked.connect(self.go_back)
         
     ##############################
     # Functions for Ui
     ##############################
+
+    def go_back(self):
+        """
+        Navigate back to index 1 of the stacked widget.
+        """
+        self.ui.stackedWidget.setCurrentIndex(1)
+
+    def toggle_search_bar_visibility(self, index):
+        """
+        Show or hide the search bar based on the current page index.
+        """
+        if index == 0 or index == 2:
+            self.ui.search_bar.setVisible(False)
+        else:
+            self.ui.search_bar.setVisible(True)
 
     def init_category_btns(self):
         """
@@ -228,7 +266,7 @@ class MainWindow(QMainWindow):
 
         dialog.exec_()
 
-    def edit_account_form(self, account_details, group_name, row):      
+    def edit_account_form(self, account_details, group_name):      
         """
         Display the edit account form pop up
         """
@@ -298,22 +336,15 @@ class MainWindow(QMainWindow):
         for account in data:
             self.display_account(account)
 
-    def edit_account(self):
+    def get_selected_account(self, btn_name, row):
         """
-        Display the edit account form pop up
+        Get the details of selected account
         """
-        # Get button properties
-        button = self.sender()
-        edit_btn = self.get_checked_btn()
-        btn_name = edit_btn.text()
-        if btn_name is None:
-            print('No Button is checked')
-            return
-
-        # Get page and row index
+        # Get page index
         current_page_index = self.ui.stackedWidget.currentIndex()
-        row = self.ui.account_table.indexAt(button.parent().pos()).row()
 
+        # Get selected account details
+        selected_account = None
         if current_page_index == 1:
             if btn_name == 'All Items':
                 print('all items')
@@ -326,10 +357,29 @@ class MainWindow(QMainWindow):
 
                 # Get selected account details
                 selected_account = accounts_data[row]
-                print(selected_account)
 
-                # Call edit account pop up
-                self.edit_account_form(selected_account, btn_name, row)
+        return selected_account
+
+    def edit_account(self):
+        """
+        Display the edit account form pop up
+        """
+        # Get the name of the sidebar button  for the page
+        button = self.sender()
+        page_btn = self.get_checked_btn()
+        btn_name = page_btn.text()
+        if btn_name is None:
+            print('No Button is checked')
+            return
+        
+        # Get row of the account to edit
+        row = self.ui.account_table.indexAt(button.parent().pos()).row()
+
+        # Get account details
+        account_details = self.get_selected_account(btn_name, row)
+
+        # Call edit account pop up
+        self.edit_account_form(account_details, btn_name)
 
     def generate_cipher(self, cipher_choice, account_name):
         """
