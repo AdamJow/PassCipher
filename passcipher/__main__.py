@@ -114,13 +114,25 @@ class MainWindow(QMainWindow):
             return
         
         # Get selected account details
-        selected_account = self.get_selected_account(btn_name, row)
+        account_details = self.get_selected_account(btn_name, row)
+        print(account_details)
+
+        # Clear previously populated fields
+        self.ui.key_input.clear()
+        self.ui.password_output.clear()
+
+        # Populate fields
+        self.ui.account_title.setText(f"{account_details[1]} account details")
+        self.ui.username_text.setPlainText(f'{account_details[2]}')
+        self.ui.url_text.setPlainText(f'{account_details[3]}')
+        self.ui.notes_text.setPlainText(f'{account_details[5]}')
         
         # Change page
         self.ui.stackedWidget.setCurrentIndex(2)
 
-        # Connect the back button to the go_back function
+        # Connect back and generate button to functions
         self.ui.back_btn.clicked.connect(self.go_back)
+        self.ui.generate_btn.clicked.connect(lambda: self.on_generate_clicked(account_details[4]))
         
     ##############################
     # Functions for Ui
@@ -130,6 +142,7 @@ class MainWindow(QMainWindow):
         """
         Navigate back to index 1 of the stacked widget.
         """
+        # Change page
         self.ui.stackedWidget.setCurrentIndex(1)
 
     def toggle_search_bar_visibility(self, index):
@@ -283,7 +296,7 @@ class MainWindow(QMainWindow):
 
         # Connect the 'save_btn' to extract data
         dialog.ui.save_btn.clicked.connect(lambda: self.save_changes(dialog, group_name, account_details[0]))
-        dialog.ui.delete_btn.clicked.connect(lambda: self.delete_account(dialog, group_name, account_details[0]))
+        dialog.ui.delete_btn.clicked.connect(lambda: self.delete_account(dialog, group_name, account_details[4], account_details[0]))
 
         dialog.exec_()
 
@@ -347,7 +360,10 @@ class MainWindow(QMainWindow):
         selected_account = None
         if current_page_index == 1:
             if btn_name == 'All Items':
-                print('all items')
+                accounts_data = self.db.get_data('accounts')
+
+                # Get selected account details
+                selected_account = accounts_data[row]
             elif btn_name == 'Favourites':
                 print('favourites')
             elif btn_name == self.category_page:
@@ -545,7 +561,7 @@ class MainWindow(QMainWindow):
         # Close form
         dialog.accept()
 
-    def delete_account(self, dialog, group_name, accountId):
+    def delete_account(self, dialog, group_name, file_path, accountId):
         """
         Extracts the user input from the Add Account dialog form and save it.
         
@@ -554,6 +570,9 @@ class MainWindow(QMainWindow):
         # Delete account in accounts db table
         self.db.delete_account(accountId)
 
+        # Delete cipher file
+        file_operations.delete_cipher_file(file_path)
+
         original_groupId = self.get_group(group_name)
 
         # Update Current Page
@@ -561,6 +580,26 @@ class MainWindow(QMainWindow):
 
         # Close form
         dialog.accept()
+    
+    def on_generate_clicked(self, file_path):
+        """
+        Gets the input text, generates the cipher, and displays it.
+        """
+        # Get the account name and input text
+        input_text = self.ui.key_input.text()
+        print(f'input text = {input_text}')
+
+        # Generate the ciphered text
+        ciphered_text = file_operations.gen_cipher_password(file_path, input_text)
+        print(f'cipher text = {ciphered_text}')
+        
+        # Check if ciphered_text was successfully generated
+        if ciphered_text is not None:
+            # Display the ciphered text in password_output
+            self.ui.password_output.setText(ciphered_text)
+        else:
+            # Handle the case where the cipher file is not found
+            self.ui.password_output.setText("Error, cipher file not found.")
     
     ##############################
     # Functions for Categories

@@ -99,3 +99,42 @@
     border-bottom: 1px solid #a8a8a8;
     background-color: #ffffff;
 }
+
+#generate_btn {
+  background-color: #2f80ed;
+  border-radius: 10px;
+  border-style: none;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  height: 50px;
+  letter-spacing: normal;
+  line-height: 1.5;
+  outline: none;
+  padding: 0px 30px;
+  position: relative;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: top;
+}
+
+#generate_btn:hover {
+  background-color: #1366d6;
+  opacity: 1;
+}
+
+#username_title {
+    padding-right: 15px;
+}
+
+#url_title {
+    padding-right: 15px;
+}
+
+#notes_title {
+    padding-right: 15px;
+}
+
+#account_title {
+    font-size: 17px;
+}
