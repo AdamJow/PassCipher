@@ -184,3 +184,27 @@ class Database:
             print(e)
             self.conn.rollback()
             return False
+    
+    def delete_group(self, group_id):
+        """
+        Delete a group by its ID and remove all associated accounts.
+
+        :param group_id: The ID of the group to delete
+        :return: True if the deletion was successful, False otherwise
+        """
+        try:
+            # Delete the group itself
+            delete_group_sql = "DELETE FROM groups WHERE id = ?"
+            self.cursor.execute(delete_group_sql, (group_id,))
+            
+            self.conn.commit()
+            
+            # Check if group was deleted
+            if self.cursor.rowcount == 0:
+                print("No group found with the given ID.")
+                return False
+            return True
+        except sqlite3.Error as e:
+            print(e)
+            self.conn.rollback()
+            return False

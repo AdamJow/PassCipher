@@ -20,6 +20,9 @@ class MainWindow(QMainWindow):
         """
         super(MainWindow, self).__init__()
 
+        # Store category buttons in a dictionary
+        self.category_buttons = {}
+
         # Set up GUI
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -133,6 +136,9 @@ class MainWindow(QMainWindow):
         """
         Update the icon based on the checked state of the button
         """
+        if button is None:
+            return
+
         if checked:
             button.setIcon(QIcon("passcipher/ui/static/icon/category(on).png"))
         else:
@@ -142,11 +148,10 @@ class MainWindow(QMainWindow):
         """
         Update the icon based of the category buttons to unchecked state
         """
-        # Ensure the category button for this group is toggled and icon is updated
-        for i in range(6, self.ui.sidebar_btns_2.count()):
-            btn = self.ui.sidebar_btns_2.itemAt(i).widget()
-            btn.setChecked(False)
-            self.update_category_icon(False, btn)
+        for btn in self.category_buttons.values():
+            if btn:  # Check if button still exists
+                btn.setChecked(False)
+                self.update_category_icon(False, btn)
     
     def create_category_btn(self, category_name):
         """
@@ -154,26 +159,49 @@ class MainWindow(QMainWindow):
 
         :return widget: Newly created category button widget
         """
-        # Create category button
-        self.category_btn = QPushButton(category_name)
-        self.category_btn.setObjectName("category_btn")
+        # Create a unique category button
+        category_btn = QPushButton(category_name)
+        category_btn.setObjectName("category_btn")
         
         # Connect to function
-        self.category_btn.clicked.connect(lambda: self.category_list(category_name))
+        category_btn.clicked.connect(lambda: self.category_list(category_name))
         
-        # Attatch icon
+        # Attach icon
         icon = QIcon("passcipher/ui/static/icon/category(off).png")
-        self.category_btn.setIcon(icon)
+        category_btn.setIcon(icon)
 
         # Set the button to be checkable and auto-exclusive
-        self.category_btn.setCheckable(True)
-        self.category_btn.setAutoExclusive(True)
+        category_btn.setCheckable(True)
+        category_btn.setAutoExclusive(True)
 
         # Connect button to update icon when checked
-        self.category_btn.toggled.connect(lambda checked: self.update_category_icon(checked, self.category_btn))
+        category_btn.toggled.connect(lambda checked: self.update_category_icon(checked, category_btn))
 
-        # Create button
-        self.ui.sidebar_btns_2.addWidget(self.category_btn)
+        # Store the button in the dictionary
+        self.category_buttons[category_name] = category_btn
+
+        # Add the button to the UI
+        self.ui.sidebar_btns_2.addWidget(category_btn)
+
+    def delete_category_btn(self, groupId):
+        """
+        Delete category button when no accounts stored under that group
+        """
+        btn = self.get_checked_btn()
+        btn_name = btn.text()
+        if btn:
+            btn.clicked.disconnect()
+            btn.toggled.disconnect()
+            btn.setChecked(False)
+            
+            self.ui.sidebar_btns_2.removeWidget(btn)
+            btn.deleteLater()
+            
+            # Remove from dictionary
+            del self.category_buttons[btn_name]
+
+            # Remove group from database
+            self.db.delete_group(groupId)
 
     def get_checked_btn(self):
         """
@@ -184,7 +212,7 @@ class MainWindow(QMainWindow):
         for i in range(self.ui.sidebar_btns_2.count()):
             btn = self.ui.sidebar_btns_2.itemAt(i).widget()
             if isinstance(btn, QPushButton) and btn.isChecked():
-                return btn.text()
+                return btn
         return None
     
     def add_account_form(self):      
@@ -258,6 +286,10 @@ class MainWindow(QMainWindow):
         # Get specific group accounts
         if groupId:
             data = self.db.get_data('accounts', {'group_id': groupId})
+            # If group is empy
+            if not data:
+                # Delete sidebar button
+                self.delete_category_btn(groupId)
         # Get all accounts
         else:
             data = self.db.get_data('accounts')
@@ -271,7 +303,8 @@ class MainWindow(QMainWindow):
         """
         # Get button properties
         button = self.sender()
-        btn_name = self.get_checked_btn()
+        edit_btn = self.get_checked_btn()
+        btn_name = edit_btn.text()
         if btn_name is None:
             print('No Button is checked')
             return
@@ -326,7 +359,6 @@ class MainWindow(QMainWindow):
         # Check if group exists
         group_data = self.db.get_data('groups', {'group_name': group_name})
         if not group_data:
-            print('group doesnt exist')
             return None
         # Get the first tuple from the result
         return group_data[0][0]
@@ -377,7 +409,8 @@ class MainWindow(QMainWindow):
         :param group_id: The group ID to which the account belongs
         """
         current_page_index = self.ui.stackedWidget.currentIndex()
-        btn_name = self.get_checked_btn()
+        edit_btn = self.get_checked_btn()
+        btn_name = edit_btn.text()
         if btn_name is None:
             print('No Button is checked')
             return
@@ -492,9 +525,8 @@ class MainWindow(QMainWindow):
         # Change to account list page (accounts page)
         self.ui.stackedWidget.setCurrentIndex(1)
 
-        # Ensure the category button for this group is toggled and icon is updated
-        for i in range(6, self.ui.sidebar_btns_2.count()):
-            btn = self.ui.sidebar_btns_2.itemAt(i).widget()
+        # Toggle the correct button and update icon
+        for btn_name, btn in self.category_buttons.items():
             if btn.text() == category_name:
                 btn.setChecked(True)
                 self.category_page = category_name
