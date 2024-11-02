@@ -40,6 +40,7 @@ class MainWindow(QMainWindow):
 
         # Setup variables
         self.category_page = None
+        self.key = None
 
         # Connect the Ui signals
         self.ui.add_btn.clicked.connect(self.add_account_form)
@@ -150,20 +151,18 @@ class MainWindow(QMainWindow):
         print(f'key = {key}')
 
         # Get the verify key encypted text
-        verify_text = self.db.get_data('user_info')
-        if not verify_text:
-            print('bo key')
-            return None
-            
-        # use input key to decrypt verify text
-        if verify_login_key(key, verify_text[0][1]):
-            self.initial_page_setup()
-        else:
+        verify_text = self.db.get_data('user_info', {'username': username})
+        if not verify_text or not verify_login_key(key, verify_text[0][1]):
             # inform user of incorrect
             dlg = QMessageBox(self)
             dlg.setWindowTitle("Error")
             dlg.setText(f"Invalid username or master key")
             dlg.exec()
+            return
+            
+        # use input key to decrypt verify text
+        self.key = key
+        self.initial_page_setup()
         
     ##############################
     # Functions for Ui
@@ -456,7 +455,7 @@ class MainWindow(QMainWindow):
             print('other cipher chosen')
 
         # Save cipher map txt file and return location
-        return file_operations.save_substitution_mapping(cipher, account_name)
+        return file_operations.save_substitution_mapping(cipher, account_name, self.key)
 
     def get_group(self, group_name):
         """
@@ -584,7 +583,8 @@ class MainWindow(QMainWindow):
 
         # Add account to accounts db table
         userId = self.db.store_user(username, encrypted_text)
-        print(f'user id = {userId}')
+        
+        self.key = key
 
         # inform user of their key
         dlg = QMessageBox(self)
@@ -663,7 +663,7 @@ class MainWindow(QMainWindow):
         print(f'input text = {input_text}')
 
         # Generate the ciphered text
-        ciphered_text = file_operations.gen_cipher_password(file_path, input_text)
+        ciphered_text = file_operations.gen_cipher_password(self.key, file_path, input_text)
         print(f'cipher text = {ciphered_text}')
         
         # Check if ciphered_text was successfully generated
