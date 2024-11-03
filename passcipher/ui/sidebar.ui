@@ -767,6 +767,9 @@
                  <height>30</height>
                 </size>
                </property>
+               <property name="placeholderText">
+                <string>abcdefghijklmnopqrstuvwxyz</string>
+               </property>
               </widget>
              </item>
              <item row="1" column="0">
@@ -783,6 +786,9 @@
                  <width>0</width>
                  <height>30</height>
                 </size>
+               </property>
+               <property name="placeholderText">
+                <string>ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
                </property>
               </widget>
              </item>
@@ -801,6 +807,9 @@
                  <height>30</height>
                 </size>
                </property>
+               <property name="placeholderText">
+                <string>0123456789</string>
+               </property>
               </widget>
              </item>
              <item row="3" column="0">
@@ -817,6 +826,9 @@
                  <width>0</width>
                  <height>30</height>
                 </size>
+               </property>
+               <property name="placeholderText">
+                <string>!@#$%^&amp;*()</string>
                </property>
               </widget>
              </item>

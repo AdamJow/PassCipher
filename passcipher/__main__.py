@@ -1,4 +1,5 @@
 import sys
+import string
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QDialog, QTableWidgetItem, QPushButton, \
     QHBoxLayout, QWidget, QMessageBox
@@ -33,6 +34,14 @@ class MainWindow(QMainWindow):
         self.db = Database()
         self.db.create_table()
 
+        # Check if user exists
+        user_data = self.db.get_data('user_info')
+        if len(user_data) == 0:
+            self.ui.login_register_btn.show()
+        else:
+            self.ui.login_register_btn.hide()
+
+
         # Set up initial page load
         self.ui.search_bar.setVisible(False)
         self.ui.icon_only_widget.hide()
@@ -42,8 +51,15 @@ class MainWindow(QMainWindow):
         # Setup variables
         self.category_page = None
         self.key = None
+        self.username = None
+        lowercase = "abcdefghijklmnopqrstuvwxyz"
+        uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        numbers = "1234567890"
+        special = "@#$%&^!"
+        self.character_set = lowercase + uppercase + numbers + special
 
         # Connect the Ui signals
+        self.ui.config_save.clicked.connect(self.on_config_save)
         self.ui.logout_btn_1.clicked.connect(self.on_logout_btn)
         self.ui.logout_btn_2.clicked.connect(self.on_logout_btn)
         self.ui.add_btn.clicked.connect(self.add_account_form)
@@ -60,7 +76,6 @@ class MainWindow(QMainWindow):
         """
         Change to login page
         """
-        print('logout btn')
         self.ui.stackedWidget.setCurrentIndex(0)
         self.uncheck_category_icons()
         self.category_page = None
@@ -74,6 +89,11 @@ class MainWindow(QMainWindow):
         # Reset variables
         self.category_page = None
         self.key = None
+        self.username = None
+        self.character_set = None
+
+        # Clear category button list
+        self.destroy_all_category_btns()
 
     def initial_page_setup(self):
         self.ui.full_menu_widget.show()
@@ -88,6 +108,7 @@ class MainWindow(QMainWindow):
         Change to cipher config page
         """
         self.ui.stackedWidget.setCurrentIndex(3)
+        self.init_config()
         self.uncheck_category_icons()
         self.category_page = None
 
@@ -96,6 +117,7 @@ class MainWindow(QMainWindow):
         Change to cipher config page
         """
         self.ui.stackedWidget.setCurrentIndex(3)
+        self.init_config()
         self.uncheck_category_icons()
         self.category_page = None
 
@@ -125,12 +147,10 @@ class MainWindow(QMainWindow):
         page_btn = self.get_checked_btn()
         btn_name = page_btn.text()
         if btn_name is None:
-            print('No Button is checked')
             return
         
         # Get selected account details
         account_details = self.get_selected_account(btn_name, row)
-        print(account_details)
 
         # Clear previously populated fields
         self.ui.key_input.clear()
@@ -153,9 +173,6 @@ class MainWindow(QMainWindow):
         username = self.ui.login_username.text()
         key = self.ui.login_key.text()
 
-        print(f'username = {username}')
-        print(f'key = {key}')
-
         # Get the verify key encypted text
         verify_text = self.db.get_data('user_info', {'username': username})
         if not verify_text or not verify_login_key(key, verify_text[0][1]):
@@ -168,11 +185,96 @@ class MainWindow(QMainWindow):
             
         # use input key to decrypt verify text
         self.key = key
+        self.username = username
+        self.character_set = verify_text[0][2] + verify_text[0][3] + verify_text[0][4] + verify_text[0][5]
         self.initial_page_setup()
         
     ##############################
     # Functions for Ui
     ##############################
+
+    def init_config(self):
+        """
+        Displays current cipher config settings
+        """
+        # Get the config settings for user
+        username = self.username
+        verify_text = self.db.get_data('user_info', {'username': username})
+        if not verify_text:
+            self._show_error_message("User doesnt exist")
+            return None
+        
+        self.ui.lowercase_input.setText(f'{verify_text[0][2]}')
+        self.ui.uppercase_input.setText(f'{verify_text[0][3]}')
+        self.ui.numbers_input.setText(f'{verify_text[0][4]}')
+        self.ui.special_input.setText(f'{verify_text[0][5]}')
+
+        self.character_set = verify_text[0][2] + verify_text[0][3] + verify_text[0][4] + verify_text[0][5]
+
+    def on_config_save(self):
+        """
+        Validates and stores inputted cipher mapping settings
+        """
+        # Get and validate each input. Use placeholder text if the input is empty.
+        lowercase = self._get_validated_text(self.ui.lowercase_input, "lowercase") or ""
+        uppercase = self._get_validated_text(self.ui.uppercase_input, "uppercase") or ""
+        numbers = self._get_validated_text(self.ui.numbers_input, "numbers") or ""
+        special = self._get_validated_text(self.ui.special_input, "special") or ""
+
+        # Check if all fields are empty, show an error message
+        if not (lowercase or uppercase or numbers or special):
+            self._show_error_message("At least 1 input field must not be empty")
+            return None
+
+        # Create config data tuple with values and username
+        config_data = (lowercase, uppercase, numbers, special, self.username)
+
+        # Update user config in the database
+        success = self.db.update_user_config(config_data)
+        if not success:
+            self._show_error_message("Error updating configuration.")
+            return
+        
+        self.character_set = lowercase + uppercase + numbers + special
+
+    def _get_validated_text(self, input_field, input_type):
+        """
+        Retrieves text from the input field, checks validity, and returns the text.
+        
+        :param input_field: The UI input field to retrieve text from.
+        :param input_type: The expected type of input (e.g., 'lowercase', 'uppercase', 'numbers', 'special').
+        :return: The validated text or None if invalid input is detected.
+        """
+        text = input_field.text().strip()
+        if not text:
+            return ""
+
+        # Validation based on input type
+        if input_type == "lowercase" and not text.islower():
+            self._show_error_message("Lowercase input must contain only lowercase letters.")
+            return None
+        elif input_type == "uppercase" and not text.isupper():
+            self._show_error_message("Uppercase input must contain only uppercase letters.")
+            return None
+        elif input_type == "numbers" and not text.isdigit():
+            self._show_error_message("Numbers input must contain only digits.")
+            return None
+        elif input_type == "special" and any(char.isalnum() for char in text):
+            self._show_error_message("Special characters input must contain only non-alphanumeric symbols.")
+            return None
+
+        return text
+
+    def _show_error_message(self, message):
+        """
+        Show an error message dialog.
+
+        :param message: The error message to display.
+        """
+        dlg = QMessageBox(self)
+        dlg.setWindowTitle("Invalid Input")
+        dlg.setText(message)
+        dlg.exec()
 
     def go_back(self, index):
         """
@@ -197,6 +299,24 @@ class MainWindow(QMainWindow):
         group_data = self.db.get_data('groups')
         for group_data in group_data:
             self.create_category_btn(group_data[1])
+
+    def destroy_all_category_btns(self):
+        """
+        Deletes all category buttons from the UI and clears the tracking dictionary.
+        """
+        for btn_name, button in list(self.category_buttons.items()):  # Use list() to safely iterate over a copy
+            # Remove the button from the layout
+            self.ui.sidebar_btns_2.removeWidget(button)
+            
+            # Detach the button from the UI and delete it
+            button.setParent(None)
+            button.deleteLater()
+            
+            # Remove the button from the dictionary
+            del self.category_buttons[btn_name]
+            
+        # Clear the dictionary to ensure all buttons are removed
+        self.category_buttons.clear()
 
     def create_edit_btn(self):
         """
@@ -274,18 +394,16 @@ class MainWindow(QMainWindow):
         """
         Delete category button when no accounts stored under that group
         """
-        btn = self.get_checked_btn()
-        btn_name = btn.text()
-        if btn:
-            btn.clicked.disconnect()
-            btn.toggled.disconnect()
-            btn.setChecked(False)
-            
+        group_data = self.db.get_data('groups', {'id': groupId})
+        print(f'delete category btn group data = {group_data}')
+        group_name = group_data[0][1]
+        btn = self.category_buttons[group_name]
+        if btn:   
             self.ui.sidebar_btns_2.removeWidget(btn)
             btn.deleteLater()
             
             # Remove from dictionary
-            del self.category_buttons[btn_name]
+            del self.category_buttons[group_name]
 
             # Remove group from database
             self.db.delete_group(groupId)
@@ -315,7 +433,7 @@ class MainWindow(QMainWindow):
 
         dialog.exec_()
 
-    def edit_account_form(self, account_details, group_name):      
+    def edit_account_form(self, account_details, group_name, row):      
         """
         Display the edit account form pop up
         """
@@ -391,6 +509,7 @@ class MainWindow(QMainWindow):
             if not data:
                 # Delete sidebar button
                 self.delete_category_btn(groupId)
+
         # Get all accounts
         else:
             data = self.db.get_data('accounts')
@@ -432,7 +551,6 @@ class MainWindow(QMainWindow):
         page_btn = self.get_checked_btn()
         btn_name = page_btn.text()
         if btn_name is None:
-            print('No Button is checked')
             return
         
         # Get row of the account to edit
@@ -441,8 +559,12 @@ class MainWindow(QMainWindow):
         # Get account details
         account_details = self.get_selected_account(btn_name, row)
 
+        if btn_name == 'All Items':
+            group_data = self.db.get_data('groups', {'id': account_details[6]})
+            btn_name = group_data[0][1]
+
         # Call edit account pop up
-        self.edit_account_form(account_details, btn_name)
+        self.edit_account_form(account_details, btn_name, row)
 
     def generate_cipher(self, cipher_choice, account_name):
         """
@@ -453,10 +575,7 @@ class MainWindow(QMainWindow):
         """
         # Generate chosen Cipher
         if cipher_choice == 'Substitution Cipher':
-            print('substitution chosen')
-            cipher = substitution.gen_substitution_mapping()
-        else:
-            print('other cipher chosen')
+            cipher = substitution.gen_substitution_mapping(self.character_set)
 
         # Save cipher map txt file and return location
         return file_operations.save_substitution_mapping(cipher, account_name, self.key)
@@ -524,7 +643,6 @@ class MainWindow(QMainWindow):
         edit_btn = self.get_checked_btn()
         btn_name = edit_btn.text()
         if btn_name is None:
-            print('No Button is checked')
             return
 
         # Convert account data to a tuple with account_id prepended
@@ -587,6 +705,7 @@ class MainWindow(QMainWindow):
         userId = self.db.store_user(username, encrypted_text)
         
         self.key = key
+        self.username = username
 
         # inform user of their key
         dlg = QMessageBox(self)
@@ -630,7 +749,7 @@ class MainWindow(QMainWindow):
         # Update account in accounts db table
         self.db.update_account(update_account_data)
 
-        # Update Current Page
+        # Delete category button if needed
         self.display_all_accounts(original_groupId)
 
         # Close form
@@ -662,11 +781,9 @@ class MainWindow(QMainWindow):
         """
         # Get the account name and input text
         input_text = self.ui.key_input.text()
-        print(f'input text = {input_text}')
 
         # Generate the ciphered text
         ciphered_text = file_operations.gen_cipher_password(self.key, file_path, input_text)
-        print(f'cipher text = {ciphered_text}')
         
         # Check if ciphered_text was successfully generated
         if ciphered_text is not None:
@@ -690,7 +807,6 @@ class MainWindow(QMainWindow):
         # Fetch the group data corresponding to the category_name
         group_data = self.db.get_data('groups', {'group_name': category_name})
         if not group_data:
-            print(f'No group found for {category_name}')
             return
 
         # Get the group ID from the group data
@@ -724,6 +840,9 @@ class MainWindow(QMainWindow):
         """
         self.category_page = None
         self.key = None
+        self.destroy_all_category_btns()
+        self.username = None
+        self.character_set = None
         self.db.close_connection()
         event.accept()
 

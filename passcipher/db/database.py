@@ -38,7 +38,11 @@ class Database:
         sql_statements = [ 
             """CREATE TABLE IF NOT EXISTS user_info (
                     username TEXT PRIMARY KEY, 
-                    verify_key TEXT
+                    verify_key TEXT,
+                    lowercase TEXT,
+                    uppercase TEXT,
+                    numbers TEXT,
+                    special TEXT
             );""",
             """CREATE TABLE IF NOT EXISTS groups (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -243,11 +247,15 @@ class Database:
 
         :param username: The username of the user
         """
-        sql = ''' INSERT INTO user_info(username, verify_key)
-                VALUES(?, ?) '''
+        sql = ''' INSERT INTO user_info(username, verify_key, lowercase, uppercase, numbers, special)
+                VALUES(?, ?, ?, ?, ?, ?) '''
         
         try:
-            self.cursor.execute(sql, (username, encrypted_text))
+            lowercase = "abcdefghijklmnopqrstuvwxyz"
+            uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            numbers = "1234567890"
+            special = "@#$%&^!"
+            self.cursor.execute(sql, (username, encrypted_text, lowercase, uppercase, numbers, special))
             self.conn.commit()
 
             # Return the id of new account
@@ -258,3 +266,33 @@ class Database:
             print(e)
             self.conn.rollback()
             return None
+        
+    def update_user_config(self, config_data):
+        """
+        Update exisitng user entry in user_info table
+
+        :param username: The username of the account to update
+        :param config_data: A tuple containing the new data for the user
+            (lowercase, uppercase, numbers, special, username)
+        :return: True if the update was successful, False otherwise
+        """ 
+        sql = ''' UPDATE user_info
+                SET lowercase = ?, 
+                    uppercase = ?, 
+                    numbers = ?, 
+                    special = ?
+                WHERE username = ? '''
+        try:
+            # Execute the update statement with the config data and username
+            self.cursor.execute(sql, config_data)
+            self.conn.commit()
+
+            # Check if user entry was updated
+            if self.cursor.rowcount == 0:
+                print("No user found with the given ID.")
+                return False
+            return True
+        except sqlite3.Error as e:
+            print(e)
+            self.conn.rollback()
+            return False

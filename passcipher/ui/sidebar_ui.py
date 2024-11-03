@@ -407,9 +407,13 @@ class Ui_MainWindow(object):
         self.notes_title.setText(_translate("MainWindow", "Notes"))
         self.generate_btn.setText(_translate("MainWindow", "Generate Password"))
         self.lowecase_label.setText(_translate("MainWindow", "Lowercase"))
+        self.lowercase_input.setPlaceholderText(_translate("MainWindow", "abcdefghijklmnopqrstuvwxyz"))
         self.uppercase_label.setText(_translate("MainWindow", "Uppercase"))
+        self.uppercase_input.setPlaceholderText(_translate("MainWindow", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
         self.numbers_label.setText(_translate("MainWindow", "Numbers"))
+        self.numbers_input.setPlaceholderText(_translate("MainWindow", "0123456789"))
         self.special_label.setText(_translate("MainWindow", "Special Characters"))
+        self.special_input.setPlaceholderText(_translate("MainWindow", "!@#$%^&*()"))
         self.config_save.setText(_translate("MainWindow", "Save"))
         self.logout_btn_1.setText(_translate("MainWindow", "Exit"))
 from .static import resource_rc
