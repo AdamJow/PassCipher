@@ -37,12 +37,15 @@ class MainWindow(QMainWindow):
         self.ui.search_bar.setVisible(False)
         self.ui.icon_only_widget.hide()
         self.ui.full_menu_widget.hide()
+        self.ui.stackedWidget.setCurrentIndex(0)
 
         # Setup variables
         self.category_page = None
         self.key = None
 
         # Connect the Ui signals
+        self.ui.logout_btn_1.clicked.connect(self.on_logout_btn)
+        self.ui.logout_btn_2.clicked.connect(self.on_logout_btn)
         self.ui.add_btn.clicked.connect(self.add_account_form)
         self.ui.login_register_btn.clicked.connect(self.register_user_form)
         self.ui.login_btn.clicked.connect(self.verify_login)
@@ -53,29 +56,32 @@ class MainWindow(QMainWindow):
     # Functions for Page Change
     ##############################
 
+    def on_logout_btn(self):
+        """
+        Change to login page
+        """
+        print('logout btn')
+        self.ui.stackedWidget.setCurrentIndex(0)
+        self.uncheck_category_icons()
+        self.category_page = None
+        self.ui.icon_only_widget.hide()
+        self.ui.full_menu_widget.hide()
+
+        self.ui.login_username.clear()
+        self.ui.login_key.clear()
+        self.ui.login_register_btn.hide()
+
+        # Reset variables
+        self.category_page = None
+        self.key = None
+
     def initial_page_setup(self):
         self.ui.full_menu_widget.show()
         self.ui.stackedWidget.setCurrentIndex(1)
-        self.ui.vault_btn_2.setChecked(True)
+        self.ui.accounts_btn_2.setChecked(True)
 
         # Display category buttons
         self.init_category_btns()
-
-    def on_vault_btn_1_toggled(self):
-        """
-        Change to database page
-        """
-        self.ui.stackedWidget.setCurrentIndex(0)
-        self.uncheck_category_icons()
-        self.category_page = None
-
-    def on_vault_btn_2_toggled(self):
-        """
-        Change to database page
-        """
-        self.ui.stackedWidget.setCurrentIndex(0)
-        self.uncheck_category_icons()
-        self.category_page = None
 
     def on_favourites_btn_1_toggled(self):
         """
