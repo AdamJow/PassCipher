@@ -83,19 +83,19 @@ class MainWindow(QMainWindow):
         # Display category buttons
         self.init_category_btns()
 
-    def on_favourites_btn_1_toggled(self):
+    def on_cipher_btn_1_toggled(self):
         """
-        Change to favourites page
+        Change to cipher config page
         """
-        self.ui.stackedWidget.setCurrentIndex(1)
+        self.ui.stackedWidget.setCurrentIndex(3)
         self.uncheck_category_icons()
         self.category_page = None
 
-    def on_favourites_btn_2_toggled(self):
+    def on_cipher_btn_2_toggled(self):
         """
-        Change to favourites page
+        Change to cipher config page
         """
-        self.ui.stackedWidget.setCurrentIndex(1)
+        self.ui.stackedWidget.setCurrentIndex(3)
         self.uncheck_category_icons()
         self.category_page = None
 
@@ -185,7 +185,7 @@ class MainWindow(QMainWindow):
         """
         Show or hide the search bar based on the current page index.
         """
-        if index == 0 or index == 2:
+        if index == 0 or index == 2 or index == 3:
             self.ui.search_bar.setVisible(False)
         else:
             self.ui.search_bar.setVisible(True)
@@ -413,8 +413,6 @@ class MainWindow(QMainWindow):
 
                 # Get selected account details
                 selected_account = accounts_data[row]
-            elif btn_name == 'Favourites':
-                print('favourites')
             elif btn_name == self.category_page:
                 # Get Group Id and all accounts with that group Id
                 groupId = self.get_group(btn_name)
@@ -534,8 +532,6 @@ class MainWindow(QMainWindow):
 
         if current_page_index == 1:
             if btn_name == 'All Items':
-                self.display_account(account_with_id)
-            elif btn_name == 'Favourites':
                 self.display_account(account_with_id)
             elif input_group == self.category_page:
                 self.display_account(account_with_id)
@@ -726,6 +722,8 @@ class MainWindow(QMainWindow):
 
         :param event: The close event
         """
+        self.category_page = None
+        self.key = None
         self.db.close_connection()
         event.accept()
 
